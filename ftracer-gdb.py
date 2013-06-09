@@ -20,6 +20,20 @@ def resolve(v):
     m = re.match(r'(.*)\+.*', v)
     return m.group(1)
 
+class Thr:
+    def __init__(self):
+        self.stack = []
+
+    def update(self, rsp):
+        if rsp == 0 or not self.stack or rsp < self.stack[-1]:
+            self.stack.append(rsp)
+        else:
+            while self.stack and rsp > self.stack[-1]:
+                self.stack.pop()
+
+    def level(self):
+        return len(self.stack)
+
 class Ftracer (gdb.Command): 
     def __init__(self):
         super (Ftracer, self).__init__("ftracer", gdb.COMMAND_NONE, gdb.COMPLETE_SYMBOL)
@@ -41,7 +55,7 @@ class Ftracer (gdb.Command):
                     v = x[j]
                     tstamp = int(v["tstamp"])
                     if tstamp:
-                        o = (t.num, v["src"], v["dst"], v["arg1"], v["arg2"], v["arg3"])
+                        o = (t.num, v["src"], v["dst"], v["arg1"], v["arg2"], v["arg3"], v["rsp"])
                         events[tstamp].append(o)
                     else:
                         break
@@ -50,6 +64,7 @@ class Ftracer (gdb.Command):
         prev = 0
         delta = 0
         start = 0
+        threads = collections.defaultdict(Thr)
         k = sorted(events.keys())
         if max:
             k = collections.deque(k, max)
@@ -59,9 +74,11 @@ class Ftracer (gdb.Command):
             if start == 0:
                 start = t
             for e in events[t]:
+                thr = threads[e[0]]
+                thr.update(int(e[6]))
                 print "%6.2f %6.2f " % ((t - start) / frequency, delta / frequency,),
                 print "%3d " % (e[0],),
-                src = " " * ((e[0] - 1) * 16) + "%-10s" % (resolve_with_off(int(e[1])),)
+                src = " " * (thr.level() * 2) + "%-10s" % (resolve_with_off(int(e[1])),)
                 print "%-20s -> %-10s %d %d %d" % (src, resolve(int(e[2])), int(e[3]), int(e[4]), int(e[5]))
             prev = t
 
