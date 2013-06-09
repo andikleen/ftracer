@@ -33,9 +33,14 @@ Quick howto:
      0.55      0.04   f1 + 45                 -> f3                   4 5 6
      0.59      0.04 main + 61                 -> f3                   7 8 9
 
+Performance overhead
 
-To use in your own project. The program needs to be build with -pg -mfentry
-and linked with -rdynamic -ldl ftrace.o
+On a Westmere system the instrumentation increases the cost of an empty call by
+about 4 times. Will depend on the CPU and the surrounding code.
+
+To use in your own project. 
+
+The program needs to be build with -pg -mfentry and linked with -rdynamic -ldl ftrace.o
 
 	cd my-project
 	make CFLAGS='-g -pg -mfentry' LDFLAGS='-rdynamic -ldl ../ftrace/ftrace.o'	(or CXXFLAGS if using C++)
@@ -62,10 +67,13 @@ A common use case is to keep the tracer running, but dump when something odd hap
 The trace buffer size per thread is hard coded, but changed be changed in the tracer source code.
 Default max is 32k.
 
+Limits:
+
+The tracer cannot see uninstrumented and inlined functions.
+There are some circumstances that confuse the nesting heuristic.
+To trace dynamically linked functions in standard libraries you can use ltrace instead.
+
 Thread interaction:
 
 The thread buffer is per process and is thread safe. However ftrace_dump will only dump the current process and the automatic exit on dumping will only dump the thread that called exit (this may be fixed in the future)
 
-
-	
-	
