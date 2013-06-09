@@ -62,6 +62,7 @@ int ftracer_tcur;
 
 static double frequency = 1.0;
 
+/* No floating point can be used in this function. */
 __attribute__((used)) void ftracer(struct frame *fr)
 {
 	if (!ftracer_enabled)
@@ -75,7 +76,7 @@ __attribute__((used)) void ftracer(struct frame *fr)
 	t->arg1 = fr->rdi;
 	t->arg2 = fr->rsi;
 	t->arg3 = fr->rdx;
-	t->rsp = (uint64_t)&fr->caller;
+	t->rsp = (uint64_t)fr;
 }
 
 bool ftrace_enable(void)
