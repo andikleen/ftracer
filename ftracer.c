@@ -1,7 +1,10 @@
 /* Simple Linux kernel style ftracer for user programs */
+#define _GNU_SOURCE 1
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <dlfcn.h>
 
 #include "ftracer.h"
 
@@ -48,7 +51,7 @@ struct frame {
 
 #define TSIZE 32768
 
-static bool tenabled;
+static volatile bool tenabled;
 static __thread struct trace tbuf[TSIZE];
 static int tcur;
 
@@ -77,6 +80,15 @@ void ftrace_disable(void)
 	tenabled = false;
 }
 
+static char *resolve(char *buf, int buflen, uint64_t addr)
+{
+	Dl_info info;
+	if (dladdr((void *)addr, &info))
+		return info.dli_sname;
+	snprintf(buf, buflen, "%lx" ,addr);
+	return buf;
+}
+
 void ftrace_dump(unsigned max)
 {
 	int num = 0;
@@ -91,9 +103,12 @@ void ftrace_dump(unsigned max)
 		i--;
 		if (t->tstamp == 0)
 			break;
-		printf("%llx %llx->%llx %llx %llx %llx\n",
+
+		char src[128], dst[128];
+		printf("%lx %s->%s %lx %lx %lx\n",
 				t->tstamp,
-				t->src, t->dst,
+				resolve(src, sizeof src, t->src),
+				resolve(dst, sizeof dst, t->dst),
 				t->arg1, t->arg2, t->arg3);
 		
 		num++;
