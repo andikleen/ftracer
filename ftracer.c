@@ -58,7 +58,7 @@ static volatile bool tenabled;
 static __thread struct trace tbuf[TSIZE];
 static int tcur;
 
-static double frequency;
+static double frequency = 1.0;
 
 __attribute__((used)) void ftracer(struct frame *fr)
 {
@@ -198,6 +198,11 @@ void ftrace_dump_at_exit(unsigned max)
 
 static void __attribute__((constructor)) init_ftracer(void)
 {
+     if (getenv("FTRACER_ON")) {
+         ftrace_dump_at_exit(0);
+	 ftrace_enable();
+     }
+
      FILE *f = fopen("/proc/cpuinfo", "r");
      if (!f)
 	  goto fallback;
