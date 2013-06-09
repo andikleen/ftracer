@@ -1,0 +1,5 @@
+source ftracer-gdb.py
+start
+break sleep thread 1
+run
+ftracer

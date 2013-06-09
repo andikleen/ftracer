@@ -12,18 +12,21 @@ LDFLAGS := -ldl -rdynamic -lpthread
 # This is in bytes
 CONFIG := -DTSIZE=128*1024
 
-CLEAN := test.o bench.o ftracer.o test bench test.out test2.out
-EXE := test bench
+CLEAN := test.o bench.o ftracer.o test bench test.out test2.out \
+	 test-thr.o
+EXE := test bench test-thr
 
 all: ftracer.o ${EXE}
 
 test: ftracer.o 
 bench: ftracer.o
+test-thr: ftracer.o
 
 ftracer.o: CFLAGS += ${CONFIG}
 
 test.o: CFLAGS+=${TRACE_CFLAGS}
 bench.o: CFLAGS+=${TRACE_CFLAGS}
+test-thr.o: CFLAGS+=${TRACE_CFLAGS}
 
 check: test
 	./test 2>&1 | ./strip-log > test.out
