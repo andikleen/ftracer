@@ -93,7 +93,7 @@ bool ftrace_disable(void)
 static const char *resolve_off(char *buf, int buflen, uint64_t addr)
 {
 	Dl_info info;
-	if (dladdr((void *)addr, &info)) {
+	if (dladdr((void *)addr, &info) && info.dli_sname) {
 		snprintf(buf, buflen, "%s + %lu", info.dli_sname,
 				addr - (uint64_t)info.dli_saddr);
 	} else {
@@ -106,7 +106,7 @@ static const char *resolve_off(char *buf, int buflen, uint64_t addr)
 static const char *resolve(char *buf, int buflen, uint64_t addr)
 {
 	Dl_info info;
-	if (dladdr((void *)addr, &info))
+	if (dladdr((void *)addr, &info) && info.dli_sname)
 		return info.dli_sname;
 	else
 		snprintf(buf, buflen, "%lx" ,addr);
@@ -134,13 +134,13 @@ static unsigned dump_start(unsigned max, unsigned cur)
 void ftrace_dump(unsigned max)
 {
 	int cur = tcur;
-	int i;
-	uint64_t ts = 0, last;
+	unsigned i;
+	uint64_t ts = 0, last = 0;
 	int stackp = 0;
 	uint64_t stack[MAXSTACK];
 	bool oldstate = ftrace_disable();
 
-	printf("%6s %6s %-25s    %-20s %s\n", "TIME", "TOFF", "CALLER", "CALLEE", "ARGUMENTS");
+	printf("%9s %9s %-25s    %-20s %s\n", "TIME", "TOFF", "CALLER", "CALLEE", "ARGUMENTS");
 	for (i = dump_start(max, cur); i != cur; i = (i + 1) % TSIZE) {
 		struct trace *t = &tbuf[i];
 		if (t->tstamp == 0)
@@ -150,8 +150,6 @@ void ftrace_dump(unsigned max)
 			stack[stackp] = t->rsp;
 			last = t->tstamp;
 		}
-		char src[128], dst[128];
-		const char *srcname = resolve_off(src, sizeof src, t->src);
 
 		/* Stack heuristic for nesting. Assumes the stack pointer stays
 		   constant inside a function. Can break with shrink wrapping etc.
@@ -165,8 +163,11 @@ void ftrace_dump(unsigned max)
 		}
 
 		char buf[50];
-		snprintf(buf, sizeof buf, "%-*s%s", 2*stackp, "", srcname);
-		printf("%6.1f %6.1f %-25s -> %-20s %lx %lx %lx\n",
+		char src[128], dst[128];
+		snprintf(buf, sizeof buf, "%-*s%s",
+				2*stackp, "",
+				resolve_off(src, sizeof src, t->src));
+		printf("%9.2f %9.2f %-25s -> %-20s %lx %lx %lx\n",
 		       (t->tstamp - ts) / frequency,
 		       (t->tstamp - last) / frequency,
 		       buf,
@@ -230,8 +231,10 @@ static void __attribute__((constructor)) init_ftracer(void)
      }     
      free(line);
      fclose(f);
-     if (frequency)
+     if (frequency) {
+	  frequency *= 1000;
 	  return;
+     }
     
 fallback:
      f = fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r");
@@ -241,7 +244,7 @@ fallback:
 	 fclose(f);
      }
      if (found == 1) {
-         frequency /= 1000000.0;
+         frequency /= 1000.0;
          return;
      }
      printf("Cannot find frequency\n");
