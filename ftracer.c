@@ -120,10 +120,12 @@ static const char *resolve(char *buf, int buflen, uint64_t addr)
 static unsigned dump_start(unsigned max, unsigned cur)
 {
 	bool wrapped = ftracer_tbuf[cur].tstamp != 0;
+
 	if (!max)
 	       	return wrapped ? cur : 0;
 
-	/* XXX checkme */
+	if (max > TLEN)
+		max = TLEN;
 	int o = (int)cur - max;
 	if (o < 0)
 		o = wrapped ? TLEN + o : 0;
