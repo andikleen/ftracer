@@ -10,8 +10,6 @@
 
 #include "ftracer.h"
 
-#define MB (1U << 20)
-
 #define TLEN (TSIZE / sizeof(struct trace))
 
 asm(
