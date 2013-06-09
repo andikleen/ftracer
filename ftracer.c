@@ -55,19 +55,20 @@ struct frame {
 	uint64_t caller;
 };
 
-static volatile bool tenabled;
-static __thread struct trace tbuf[TSIZE];
-static int tcur;
+int ftracer_size = TSIZE;
+bool ftracer_enabled;
+__thread struct trace ftracer_tbuf[TSIZE];
+int ftracer_tcur;
 
 static double frequency = 1.0;
 
 __attribute__((used)) void ftracer(struct frame *fr)
 {
-	if (!tenabled)
+	if (!ftracer_enabled)
 		return;
-	struct trace *t = &tbuf[tcur++];
-	if (tcur >= TSIZE)
-		tcur = 0;
+	struct trace *t = &ftracer_tbuf[ftracer_tcur++];
+	if (ftracer_tcur >= TSIZE)
+		ftracer_tcur = 0;
 	t->tstamp = __builtin_ia32_rdtsc();
 	t->src = fr->caller;
 	t->dst = fr->callee;
@@ -79,15 +80,15 @@ __attribute__((used)) void ftracer(struct frame *fr)
 
 bool ftrace_enable(void)
 {
-	bool old = tenabled;
-	tenabled = true;
+	bool old = ftracer_enabled;
+	ftracer_enabled = true;
 	return old;
 }
 
 bool ftrace_disable(void)
 {
-	bool old = tenabled;
-	tenabled = false;
+	bool old = ftracer_enabled;
+	ftracer_enabled = false;
 	return old;
 }
 
@@ -118,7 +119,7 @@ static unsigned dump_start(unsigned max, unsigned cur)
 {
 	if (!max)
 		max = TSIZE;
-	if (tbuf[cur].tstamp) { /* Did it wrap? */
+	if (ftracer_tbuf[cur].tstamp) { /* Did it wrap? */
 		if (max >= TSIZE)
 			return (cur + 1) % TSIZE;
 		if (max > cur)
@@ -134,7 +135,7 @@ static unsigned dump_start(unsigned max, unsigned cur)
 
 void ftrace_dump(unsigned max)
 {
-	int cur = tcur;
+	int cur = ftracer_tcur;
 	unsigned i;
 	uint64_t ts = 0, last = 0;
 	int stackp = 0;
@@ -143,7 +144,7 @@ void ftrace_dump(unsigned max)
 
 	printf("%9s %9s %-25s    %-20s %s\n", "TIME", "TOFF", "CALLER", "CALLEE", "ARGUMENTS");
 	for (i = dump_start(max, cur); i != cur; i = (i + 1) % TSIZE) {
-		struct trace *t = &tbuf[i];
+		struct trace *t = &ftracer_tbuf[i];
 		if (t->tstamp == 0)
 			break;
 		if (!ts) {
