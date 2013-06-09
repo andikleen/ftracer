@@ -4,12 +4,14 @@ ftracer is a simple user space implementation of a linux kernel style function t
 It allows to trace every call in a instrumented user applications. It is useful
 for debugging and performance analysis due to its fine grained time stamp.
 
+It relies on gcc generating a call on top of every function call.
+
 The tracing slows every function call down. The tracing is per thread and does
 not create a global bottleneck.
 
 Note that the time stamps include the overhead from the tracing.
 
-Requires gcc 4.7+ and a x86_64 system and the ability to rebuild
+Requires gcc 4.7+ and a x86_64 system and the ability to rebuild the program.
 
 Quick howto:
      cd ftrace
@@ -36,7 +38,11 @@ Quick howto:
 Performance overhead
 
 On a Westmere system the instrumentation increases the cost of an empty call by
-about 4 times. Will depend on the CPU and the surrounding code.
+about 4 times. This is with a micro benchmark that does these calls in a tight
+loop. On codes doing less function calls the overhead will likely be lower,
+as an Out-of-order CPU can better schedule around it.
+Exact slowdowns will depend on the CPU and the surrounding code and how many
+function calls it does.
 
 To use in your own project. 
 
@@ -47,7 +53,8 @@ The program needs to be build with -pg -mfentry and linked with -rdynamic -ldl f
 	make sure to rebuild everything
 
 	FTRACER_ON=1 ./my_program
-	... will dump the 
+
+FTRACE_ON=1 enables automatic dumping at exit or SIGABRT (e.g. assert failure)
 
 Control ftracer from the program:
 
@@ -62,10 +69,11 @@ Control ftracer from the program:
 Call ftrace_dump_on_exit(max) to automatically dump on exit. ftrace_dump() can be also 
 called from gdb during debugging.
 
-A common use case is to keep the tracer running, but dump when something odd happens (like an assertation failure)
+A common use case is to keep the tracer running, but dump when
+something odd happens (like an assertation failure)
 
-The trace buffer size per thread is hard coded, but changed be changed in the tracer source code.
-Default max is 32k.
+The trace buffer size per thread is hard coded, but changed be changed
+in the tracer source code.  Default max is 32k.
 
 Limits:
 
@@ -75,5 +83,8 @@ To trace dynamically linked functions in standard libraries you can use ltrace i
 
 Thread interaction:
 
-The thread buffer is per process and is thread safe. However ftrace_dump will only dump the current process and the automatic exit on dumping will only dump the thread that called exit (this may be fixed in the future)
+The thread buffer is per process and is thread safe. However
+ftrace_dump will only dump the current process and the automatic exit
+on dumping will only dump the thread that called exit (this may be
+fixed in the future)
 
