@@ -9,6 +9,9 @@
 
 #include "ftracer.h"
 
+/* Trace buffer size. Feel free to tweak. Doesn't need to be power of two. */
+#define TSIZE 32768
+
 asm(
 "	.globl __fentry__\n"
 "__fentry__:\n"
@@ -50,8 +53,6 @@ struct frame {
 	uint64_t callee;
 	uint64_t caller;
 };
-
-#define TSIZE 32768
 
 static volatile bool tenabled;
 static __thread struct trace tbuf[TSIZE];
