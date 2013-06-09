@@ -7,7 +7,7 @@ t = sys.stdin.readline()
 tslen = string.find(t, "CALLER")
 
 for l in sys.stdin:
-    l = l[20:]
+    l = l[tslen:]
     l = l.replace("->","")
     l = re.sub(r'\+ \d+','', l)
     l = re.sub(r'\s+', ' ', l)
