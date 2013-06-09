@@ -4,7 +4,7 @@
 import sys, string, re
 
 t = sys.stdin.readline()
-tslen = string.find(t, "CALLER")
+tslen = string.find(t, "FUNC")
 
 for l in sys.stdin:
     l = l[tslen:]

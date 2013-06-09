@@ -55,12 +55,12 @@ class Ftracer (gdb.Command):
                     v = x[j]
                     tstamp = int(v["tstamp"])
                     if tstamp:
-                        o = (t.num, v["src"], v["dst"], v["arg1"], v["arg2"], v["arg3"], v["rsp"])
+                        o = (t.num, v["func"], v["arg1"], v["arg2"], v["arg3"], v["rsp"])
                         events[tstamp].append(o)
                     else:
                         break
-        print ("%6s %6s  %3s  %-20s    %-10s %s" %
-                ("TIME", "DELTA", "THR", "CALLER", "CALLEE", "ARGS"))
+        print ("%6s %6s %3s %-25s %s" %
+                ("TIME", "DELTA", "THR", "FUNC", "ARGS"))
         prev = 0
         delta = 0
         start = 0
@@ -75,11 +75,14 @@ class Ftracer (gdb.Command):
                 start = t
             for e in events[t]:
                 thr = threads[e[0]]
-                thr.update(int(e[6]))
-                print "%6.2f %6.2f " % ((t - start) / frequency, delta / frequency,),
-                print "%3d " % (e[0],),
-                src = " " * (thr.level() * 2) + "%-10s" % (resolve_with_off(int(e[1])),)
-                print "%-20s -> %-10s %d %d %d" % (src, resolve(int(e[2])), int(e[3]), int(e[4]), int(e[5]))
+                thr.update(int(e[5]))
+                func = " " * (thr.level() * 2) + resolve(int(e[1]))
+                print "%6.2f %6.2f %3d %-25s %d %d %d" % (
+                        (t - start) / frequency,
+                        delta / frequency,
+                        e[0],
+                        func,
+                        int(e[2]), int(e[3]), int(e[4]))
             prev = t
 
 

@@ -17,7 +17,7 @@
 asm(
 "	.globl __fentry__\n"
 "__fentry__:\n"
-/* save arguments */
+/* save arguments. must match frame below. */
 "	push %rax\n"
 "	push %rdi\n"
 "	push %rsi\n"
@@ -38,8 +38,7 @@ asm(
 
 struct trace {
 	uint64_t tstamp;
-	uint64_t src;
-	uint64_t dst;
+	uint64_t func;
 	uint64_t arg1, arg2, arg3;
 	uint64_t rsp;
 };
@@ -52,8 +51,8 @@ struct frame {
 	uint64_t rsi;
 	uint64_t rdi;
 	uint64_t rax;
-	uint64_t callee;
-	uint64_t caller;
+	uint64_t func;
+	uint64_t caller; /* untraced currently */
 };
 
 int ftracer_size = TLEN;
@@ -72,8 +71,7 @@ __attribute__((used)) void ftracer(struct frame *fr)
 	if (ftracer_tcur >= TLEN)
 		ftracer_tcur = 0;
 	t->tstamp = __builtin_ia32_rdtsc();
-	t->src = fr->caller;
-	t->dst = fr->callee;
+	t->func = fr->func;
 	t->arg1 = fr->rdi;
 	t->arg2 = fr->rsi;
 	t->arg3 = fr->rdx;
@@ -93,19 +91,6 @@ bool ftrace_disable(void)
 	ftracer_enabled = false;
 	return old;
 }
-
-static const char *resolve_off(char *buf, int buflen, uint64_t addr)
-{
-	Dl_info info;
-	if (dladdr((void *)addr, &info) && info.dli_sname) {
-		snprintf(buf, buflen, "%s + %lu", info.dli_sname,
-				addr - (uint64_t)info.dli_saddr);
-	} else {
-		snprintf(buf, buflen, "%lx" ,addr);
-	}
-	return buf;
-}
-
 
 static const char *resolve(char *buf, int buflen, uint64_t addr)
 {
@@ -143,7 +128,7 @@ void ftrace_dump(FILE *out, unsigned max)
 	uint64_t stack[MAXSTACK];
 	bool oldstate = ftrace_disable();
 
-	fprintf(out, "%9s %9s %-25s    %-20s %s\n", "TIME", "TOFF", "CALLER", "CALLEE", "ARGUMENTS");
+	fprintf(out, "%9s %9s %-25s %s\n", "TIME", "TOFF", "FUNC", "ARGS");
 	for (i = dump_start(max, cur); ; i = (i + 1) % TLEN) {
 		struct trace *t = &ftracer_tbuf[i];
 		if (t->tstamp == 0)
@@ -165,16 +150,15 @@ void ftrace_dump(FILE *out, unsigned max)
 				stackp--;
 		}
 
-		char buf[50];
-		char src[128], dst[128];
+		char buf[128];
+		char func[128];
 		snprintf(buf, sizeof buf, "%-*s%s",
 				2*stackp, "",
-				resolve_off(src, sizeof src, t->src));
-		fprintf(out, "%9.2f %9.2f %-25s -> %-20s %lx %lx %lx\n",
+				resolve(func, sizeof func, t->func));
+		fprintf(out, "%9.2f %9.2f %-25s %lx %lx %lx\n",
 		       (t->tstamp - ts) / ftracer_frequency,
 		       (t->tstamp - last) / ftracer_frequency,
 		       buf,
-		       resolve(dst, sizeof dst, t->dst),
 		       t->arg1, t->arg2, t->arg3);
 		last = t->tstamp;
 
