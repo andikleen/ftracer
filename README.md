@@ -106,7 +106,7 @@ The output from all the thread buffers is interleaved.
 Limits:
 
 The trace buffer size per thread is hard coded, but can be changed
-in the Makefile and rebuilding ftracer.o. The default is 32k
+in the Makefile and rebuilding ftracer.o. Each entry currently takes 56 bytes.
 static symbols cannot be resolved to names right now from the program (compile with -Dstatic= if needed or use gdb)
 The tracer cannot see uninstrumented and inlined functions.
 There are some circumstances that confuse the nesting heuristic.

@@ -9,7 +9,8 @@ TRACE_CFLAGS := -pg -mfentry -fno-inline
 LDFLAGS := -ldl -rdynamic -lpthread
 #
 # Change for different trace buffer size per thread
-CONFIG := -DTSIZE=32768
+# This is in bytes
+CONFIG := -DTSIZE=128*1024
 
 CLEAN := test.o bench.o ftracer.o test bench test.out
 EXE := test bench

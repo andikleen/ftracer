@@ -10,10 +10,9 @@
 
 #include "ftracer.h"
 
-/* Trace buffer size. Feel free to tweak. Doesn't need to be power of two. */
-#ifndef TSIZE
-#define TSIZE 32768
-#endif
+#define MB (1U << 20)
+
+#define TLEN (TSIZE / sizeof(struct trace))
 
 asm(
 "	.globl __fentry__\n"
@@ -57,9 +56,9 @@ struct frame {
 	uint64_t caller;
 };
 
-int ftracer_size = TSIZE;
+int ftracer_size = TLEN;
 bool ftracer_enabled;
-__thread struct trace ftracer_tbuf[TSIZE];
+__thread struct trace ftracer_tbuf[TLEN];
 int ftracer_tcur;
 
 double ftracer_frequency = 1.0;
@@ -70,7 +69,7 @@ __attribute__((used)) void ftracer(struct frame *fr)
 	if (!ftracer_enabled)
 		return;
 	struct trace *t = &ftracer_tbuf[ftracer_tcur++];
-	if (ftracer_tcur >= TSIZE)
+	if (ftracer_tcur >= TLEN)
 		ftracer_tcur = 0;
 	t->tstamp = __builtin_ia32_rdtsc();
 	t->src = fr->caller;
@@ -121,12 +120,12 @@ static const char *resolve(char *buf, int buflen, uint64_t addr)
 static unsigned dump_start(unsigned max, unsigned cur)
 {
 	if (!max)
-		max = TSIZE;
+		max = TLEN;
 	if (ftracer_tbuf[cur].tstamp) { /* Did it wrap? */
-		if (max >= TSIZE)
-			return (cur + 1) % TSIZE;
+		if (max >= TLEN)
+			return (cur + 1) % TLEN;
 		if (max > cur)
-			return (TSIZE - 1 - (max - (cur - max))); // XXX
+			return (TLEN - 1 - (max - (cur - max))); // XXX
 	} else { 
 		if (max >= cur)
 			return 0;
@@ -146,7 +145,7 @@ void ftrace_dump(FILE *out, unsigned max)
 	bool oldstate = ftrace_disable();
 
 	fprintf(out, "%9s %9s %-25s    %-20s %s\n", "TIME", "TOFF", "CALLER", "CALLEE", "ARGUMENTS");
-	for (i = dump_start(max, cur); i != cur; i = (i + 1) % TSIZE) {
+	for (i = dump_start(max, cur); i != cur; i = (i + 1) % TLEN) {
 		struct trace *t = &ftracer_tbuf[i];
 		if (t->tstamp == 0)
 			break;
