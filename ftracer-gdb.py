@@ -77,7 +77,7 @@ class Ftracer (gdb.Command):
                 thr = threads[e[0]]
                 thr.update(int(e[5]))
                 func = " " * (thr.level() * 2) + resolve(int(e[1]))
-                print "%6.2f %6.2f %3d %-25s %d %d %d" % (
+                print "%6.2f %6.2f %3d %-25s %x %x %x" % (
                         (t - start) / frequency,
                         delta / frequency,
                         e[0],

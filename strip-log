@@ -8,8 +8,8 @@ tslen = string.find(t, "FUNC")
 
 for l in sys.stdin:
     l = l[tslen:]
-    l = l.replace("->","")
-    l = re.sub(r'\+ \d+','', l)
+    #l = l.replace("->","")
+    #l = re.sub(r'\+ \d+','', l)
     l = re.sub(r'\s+', ' ', l)
     l = re.sub(r'^\s', '', l)
     print l

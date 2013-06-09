@@ -12,7 +12,7 @@ LDFLAGS := -ldl -rdynamic -lpthread
 # This is in bytes
 CONFIG := -DTSIZE=128*1024
 
-CLEAN := test.o bench.o ftracer.o test bench test.out
+CLEAN := test.o bench.o ftracer.o test bench test.out test2.out
 EXE := test bench
 
 all: ftracer.o ${EXE}
@@ -28,6 +28,13 @@ bench.o: CFLAGS+=${TRACE_CFLAGS}
 check: test
 	./test 2>&1 | ./strip-log > test.out
 	diff -b -u test.out test.out-expected
+
+	gdb -x gdbtest --eval detach --eval quit ./test 2>&1 | \
+		sed -n '1,/^Detaching/p' | \
+		sed -n '/TIME/,$$p' | \
+		grep -v Detaching | \
+		./strip-log > test2.out
+	diff -b -u test2.out test.out-expected
 	echo PASSED
 clean:
 	rm -f ${CLEAN} ${EXE}
