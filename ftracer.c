@@ -11,7 +11,9 @@
 #include "ftracer.h"
 
 /* Trace buffer size. Feel free to tweak. Doesn't need to be power of two. */
+#ifndef TSIZE
 #define TSIZE 32768
+#endif
 
 asm(
 "	.globl __fentry__\n"

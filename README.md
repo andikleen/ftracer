@@ -72,8 +72,8 @@ called from gdb during debugging.
 A common use case is to keep the tracer running, but dump when
 something odd happens (like an assertation failure)
 
-The trace buffer size per thread is hard coded, but changed be changed
-in the tracer source code.  Default max is 32k.
+The trace buffer size per thread is hard coded, but can be changed
+in the Makefile and rebuilding ftracer.o. The default is 32k
 
 Limits:
 
