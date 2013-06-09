@@ -36,6 +36,7 @@ struct trace {
 	uint64_t src;
 	uint64_t dst;
 	uint64_t arg1, arg2, arg3;
+	uint64_t rsp;
 };
 
 struct frame {
@@ -71,6 +72,7 @@ __attribute__((used)) void ftracer(struct frame *fr)
 	t->arg1 = fr->rdi;
 	t->arg2 = fr->rsi;
 	t->arg3 = fr->rdx;
+	t->rsp = (uint64_t)&fr->caller;
 }
 
 bool ftrace_enable(void)
@@ -87,16 +89,14 @@ bool ftrace_disable(void)
 	return old;
 }
 
-static const char *resolve_off(char *buf, int buflen, uint64_t addr, uint64_t *base)
+static const char *resolve_off(char *buf, int buflen, uint64_t addr)
 {
 	Dl_info info;
 	if (dladdr((void *)addr, &info)) {
 		snprintf(buf, buflen, "%s + %lu", info.dli_sname,
 				addr - (uint64_t)info.dli_saddr);
-		*base = (uint64_t)info.dli_saddr;
 	} else {
 		snprintf(buf, buflen, "%lx" ,addr);
-		*base = 0;
 	}
 	return buf;
 }
@@ -128,28 +128,48 @@ static unsigned dump_start(unsigned max, unsigned cur)
 	return cur - max;
 }
 
+#define MAXSTACK 64
+
 void ftrace_dump(unsigned max)
 {
 	int cur = tcur;
 	int i;
 	uint64_t ts = 0, last = 0;
+	int stackp = 0;
+	uint64_t stack[MAXSTACK];
 	bool oldstate = ftrace_disable();
 
+	printf("%6s %6s %-25s    %-20s %s\n", "TIME", "TOFF", "CALLER", "CALLEE", "ARGUMENTS");
 	for (i = dump_start(max, cur); i != cur; i = (i + 1) % TSIZE) {
 		struct trace *t = &tbuf[i];
 		if (t->tstamp == 0)
 			break;
-		if (!ts)
+		if (!ts) {
 			ts = t->tstamp;
+			stack[stackp] = t->rsp;
+		}
 		if (!last)
 			last = t->tstamp;
 		char src[128], dst[128];
-		uint64_t callbase;
-		const char *srcname = resolve_off(src, sizeof src, t->src, &callbase);
-		printf("%6.1f %6.1f %-20s -> %-20s %lx %lx %lx\n",
+		const char *srcname = resolve_off(src, sizeof src, t->src);
+
+		/* Stack heuristic for nesting. Assumes the stack pointer stays
+		   constant inside a function. Can break with shrink wrapping etc.
+		   Also stack switches will confuse it. */
+		if (t->rsp < stack[stackp]) {
+			if (stackp < MAXSTACK)
+				stack[++stackp] = t->rsp;
+		} else {
+			while (stackp > 0 && t->rsp > stack[stackp])
+				stackp--;
+		}
+
+		char buf[50];
+		snprintf(buf, sizeof buf, "%-*s%s", 2*stackp, "", srcname);
+		printf("%6.1f %6.1f %-25s -> %-20s %lx %lx %lx\n",
 		       (t->tstamp - ts) / frequency,
 		       (t->tstamp - last) / frequency,
-		       srcname,
+		       buf,
 		       resolve(dst, sizeof dst, t->dst),
 		       t->arg1, t->arg2, t->arg3);
 		last = t->tstamp;
