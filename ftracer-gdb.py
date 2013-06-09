@@ -27,6 +27,7 @@ class Ftracer (gdb.Command):
     def invoke(self, arg, from_tty):
         events = collections.defaultdict(list)
         threads = {}
+        frequency = float(gdb.selected_frame().read_var("ftracer_frequency"))
         for i in gdb.inferiors():
             for t in i.threads():
                 gdb.execute("thread %d" % (t.num,))
@@ -34,22 +35,24 @@ class Ftracer (gdb.Command):
                 x = gdb.selected_frame().read_var("ftracer_tbuf")
                 for j in range(0, ftracer_len-1):
                     v = x[j]
-                    #print v
-                    #print t.num
                     tstamp = int(v["tstamp"])
                     if tstamp:
                         o = (t.num, v["src"], v["dst"], v["arg1"], v["arg2"], v["arg3"])
                         events[tstamp].append(o)
                     else:
                         break
-        print "%10s %3s  %-20s    %-10s %s" % ("DELTA", "THR", "CALLER", "CALLEE", "ARGS",)
+        print ("%6s %6s  %3s  %-20s    %-10s %s" %
+                ("TIME", "DELTA", "THR", "CALLER", "CALLEE", "ARGS"))
         prev = 0
         delta = 0
+        start = 0
         for t in sorted(events.keys()):
             if prev:
                 delta = t - prev
+            if start == 0:
+                start = t
             for e in events[t]:
-                print "%10d" % (delta,),
+                print "%6.2f %6.2f " % ((t - start) / frequency, delta / frequency,),
                 print "%3d " % (e[0],),
                 src = " " * ((e[0] - 1) * 16) + "%-10s" % (resolve_with_off(int(e[1])),)
                 print "%-20s -> %-10s %d %d %d" % (src, resolve(int(e[2])), int(e[3]), int(e[4]), int(e[5]))

@@ -62,7 +62,7 @@ bool ftracer_enabled;
 __thread struct trace ftracer_tbuf[TSIZE];
 int ftracer_tcur;
 
-static double frequency = 1.0;
+double ftracer_frequency = 1.0;
 
 /* No floating point can be used in this function. */
 __attribute__((used)) void ftracer(struct frame *fr)
@@ -173,8 +173,8 @@ void ftrace_dump(FILE *out, unsigned max)
 				2*stackp, "",
 				resolve_off(src, sizeof src, t->src));
 		fprintf(out, "%9.2f %9.2f %-25s -> %-20s %lx %lx %lx\n",
-		       (t->tstamp - ts) / frequency,
-		       (t->tstamp - last) / frequency,
+		       (t->tstamp - ts) / ftracer_frequency,
+		       (t->tstamp - last) / ftracer_frequency,
 		       buf,
 		       resolve(dst, sizeof dst, t->dst),
 		       t->arg1, t->arg2, t->arg3);
@@ -217,18 +217,18 @@ static void __attribute__((constructor)) init_ftracer(void)
 
      char *line = NULL;
      size_t linelen = 0;
-     frequency = 0;
+     ftracer_frequency = 0;
      while (getline(&line, &linelen, f) > 0) {
 	  char unit[10];
 
 	  if (strncmp(line, "model name", sizeof("model name")-1))
 	       continue;
 	  if (sscanf(line + strcspn(line, "@") + 1, "%lf%10s", 
-		     &frequency, unit) == 2) {
+		     &ftracer_frequency, unit) == 2) {
 	       if (!strcasecmp(unit, "GHz"))
 		     ;
 	       else if (!strcasecmp(unit, "Mhz"))
-		     frequency *= 1000.0;
+		     ftracer_frequency *= 1000.0;
 	       else {
 		    printf("Cannot parse unit %s\n", unit);
 		    goto fallback;
@@ -238,8 +238,8 @@ static void __attribute__((constructor)) init_ftracer(void)
      }     
      free(line);
      fclose(f);
-     if (frequency) {
-	  frequency *= 1000;
+     if (ftracer_frequency) {
+	  ftracer_frequency *= 1000;
 	  return;
      }
     
@@ -247,15 +247,15 @@ fallback:
      f = fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r");
      int found = 0;
      if (f) {
-         found = fscanf(f, "%lf", &frequency);
+         found = fscanf(f, "%lf", &ftracer_frequency);
 	 fclose(f);
      }
      if (found == 1) {
-         frequency /= 1000.0;
+         ftracer_frequency /= 1000.0;
          return;
      }
-     printf("Cannot find frequency\n");
-     frequency = 1;
+     printf("Cannot find ftracer_frequency\n");
+     ftracer_frequency = 1;
 }
 
 #if 0 /* Gives ugly warnings */
