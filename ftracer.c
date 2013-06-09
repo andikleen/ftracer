@@ -119,18 +119,15 @@ static const char *resolve(char *buf, int buflen, uint64_t addr)
 
 static unsigned dump_start(unsigned max, unsigned cur)
 {
+	bool wrapped = ftracer_tbuf[cur].tstamp != 0;
 	if (!max)
-		max = TLEN;
-	if (ftracer_tbuf[cur].tstamp) { /* Did it wrap? */
-		if (max >= TLEN)
-			return (cur + 1) % TLEN;
-		if (max > cur)
-			return (TLEN - 1 - (max - (cur - max))); // XXX
-	} else { 
-		if (max >= cur)
-			return 0;
-	}
-	return cur - max;
+	       	return wrapped ? cur : 0;
+
+	/* XXX checkme */
+	int o = (int)cur - max;
+	if (o < 0)
+		o = wrapped ? TLEN + o : 0;
+	return o;
 }
 
 #define MAXSTACK 64
@@ -145,7 +142,7 @@ void ftrace_dump(FILE *out, unsigned max)
 	bool oldstate = ftrace_disable();
 
 	fprintf(out, "%9s %9s %-25s    %-20s %s\n", "TIME", "TOFF", "CALLER", "CALLEE", "ARGUMENTS");
-	for (i = dump_start(max, cur); i != cur; i = (i + 1) % TLEN) {
+	for (i = dump_start(max, cur); ; i = (i + 1) % TLEN) {
 		struct trace *t = &ftracer_tbuf[i];
 		if (t->tstamp == 0)
 			break;
@@ -178,6 +175,9 @@ void ftrace_dump(FILE *out, unsigned max)
 		       resolve(dst, sizeof dst, t->dst),
 		       t->arg1, t->arg2, t->arg3);
 		last = t->tstamp;
+
+		if (i == cur - 1)
+			break;
 	}
 
 	if (oldstate)
