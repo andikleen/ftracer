@@ -64,7 +64,7 @@ Control ftracer from the program:
 	...
 	ftrace_disable();
 
-	ftrace_dump(100);	/* Dump last 100 entries of current thread to stdout */
+	ftrace_dump(stdout, 100);	/* Dump last 100 entries of current thread to stdout */
 
 Call ftrace_dump_on_exit(max) to automatically dump on exit. ftrace_dump() can be also 
 called from gdb during debugging.

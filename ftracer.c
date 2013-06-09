@@ -136,7 +136,7 @@ static unsigned dump_start(unsigned max, unsigned cur)
 
 #define MAXSTACK 64
 
-void ftrace_dump(unsigned max)
+void ftrace_dump(FILE *out, unsigned max)
 {
 	int cur = ftracer_tcur;
 	unsigned i;
@@ -145,7 +145,7 @@ void ftrace_dump(unsigned max)
 	uint64_t stack[MAXSTACK];
 	bool oldstate = ftrace_disable();
 
-	printf("%9s %9s %-25s    %-20s %s\n", "TIME", "TOFF", "CALLER", "CALLEE", "ARGUMENTS");
+	fprintf(out, "%9s %9s %-25s    %-20s %s\n", "TIME", "TOFF", "CALLER", "CALLEE", "ARGUMENTS");
 	for (i = dump_start(max, cur); i != cur; i = (i + 1) % TSIZE) {
 		struct trace *t = &ftracer_tbuf[i];
 		if (t->tstamp == 0)
@@ -172,7 +172,7 @@ void ftrace_dump(unsigned max)
 		snprintf(buf, sizeof buf, "%-*s%s",
 				2*stackp, "",
 				resolve_off(src, sizeof src, t->src));
-		printf("%9.2f %9.2f %-25s -> %-20s %lx %lx %lx\n",
+		fprintf(out, "%9.2f %9.2f %-25s -> %-20s %lx %lx %lx\n",
 		       (t->tstamp - ts) / frequency,
 		       (t->tstamp - last) / frequency,
 		       buf,
@@ -189,7 +189,7 @@ static int dump_at_exit;
 
 static void call_ftrace_dump(void)
 {
-	ftrace_dump(dump_at_exit);
+	ftrace_dump(stderr, dump_at_exit);
 }
 
 void ftrace_dump_at_exit(unsigned max)
