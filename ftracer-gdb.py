@@ -32,7 +32,7 @@ class Thr:
                 self.stack.pop()
 
     def level(self):
-        return len(self.stack)
+        return len(self.stack) - 1
 
 class Ftracer (gdb.Command): 
     def __init__(self):
