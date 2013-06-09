@@ -18,6 +18,7 @@ EXE := test bench
 all: ftracer.o ${EXE}
 
 test: ftracer.o 
+bench: ftracer.o
 
 ftracer.o: CFLAGS += ${CONFIG}
 
