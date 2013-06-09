@@ -72,20 +72,44 @@ called from gdb during debugging.
 A common use case is to keep the tracer running, but dump when
 something odd happens (like an assertation failure)
 
-The trace buffer size per thread is hard coded, but can be changed
-in the Makefile and rebuilding ftracer.o. The default is 32k
+The thread buffer is per process and is thread safe. However
+ftrace_dump will only dump the current process and the automatic exit
+on dumping will only dump the thread that called exit.
+
+The trace buffer can be also controlled from gdb using a special python module.
+This has the advantage that gdb can display the trace buffers from all threads.
+Note that the program needs to be linked with -lpthread to allow gdb to access
+the per thread buffers
+
+	FTRACE_ON=1 gdb program
+        ...
+	(gdb) source ftracer-gdb.py	
+	...
+	<program stops e.g. at a break point or signal>
+        (gdb) ftracer
+
+	[Switching to thread 1 (Thread 0x7ffff7615700 (LWP 23177))]
+	#0  main () at test.c:28
+	28              f1(3, 4, 5);
+	  TIME  DELTA  THR  CALLER                  CALLEE     ARGS
+	  0.00   0.00    1  main+41              -> f1         1 2 3
+	  0.04   0.04    1  f1+25                -> f2         10 11 12
+	  0.09   0.05    1  f2+25                -> f3         1 2 3
+	  0.13   0.04    1  f1+25                -> f3         4 5 6
+	  0.17   0.04    1  f1+45                -> f2         20 21 22
+	  0.21   0.03    1  f2+25                -> f3         1 2 3
+	  0.25   0.04    1  f1+45                -> f3         4 5 6
+	  0.30   0.05    1  main+41              -> f3         7 8 9
+
+The output from all the thread buffers is interleaved.
 
 Limits:
 
-static symbols cannot be resolved to names right now (compile with -Dstatic= if needed)
+The trace buffer size per thread is hard coded, but can be changed
+in the Makefile and rebuilding ftracer.o. The default is 32k
+static symbols cannot be resolved to names right now from the program (compile with -Dstatic= if needed or use gdb)
 The tracer cannot see uninstrumented and inlined functions.
 There are some circumstances that confuse the nesting heuristic.
 To trace dynamically linked functions in standard libraries you can use ltrace instead.
 
-Thread interaction:
-
-The thread buffer is per process and is thread safe. However
-ftrace_dump will only dump the current process and the automatic exit
-on dumping will only dump the thread that called exit (this may be
-fixed in the future)
 
