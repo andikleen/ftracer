@@ -20,10 +20,11 @@ void f1(int a, int b, int c)
 	f3(7, 8, 9);
 }
 
-main()
+int main(void)
 {
 	ftrace_dump_at_exit(0);
 	ftrace_enable();
 	f1(1, 2, 3);
 	f1(3, 4, 5);
+	return 0;
 }
