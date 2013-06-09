@@ -77,6 +77,7 @@ in the tracer source code.  Default max is 32k.
 
 Limits:
 
+static symbols cannot be resolved to names right now.
 The tracer cannot see uninstrumented and inlined functions.
 There are some circumstances that confuse the nesting heuristic.
 To trace dynamically linked functions in standard libraries you can use ltrace instead.
