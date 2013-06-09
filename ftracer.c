@@ -190,13 +190,13 @@ void ftrace_dump_at_exit(unsigned max)
 static void ftracer_envconf(void)
 {
 	char *v = getenv("FTRACER");
-	printf("foo\n");
 	if (v && sscanf(v, "%d", &dump_at_exit) == 1) {
 		printf("enabled %d\n",dump_at_exit);
 		if (dump_at_exit == 1)
 			dump_at_exit = 0;
 		ftrace_dump_at_exit(dump_at_exit);
 		// xxx chain previous handler
+		// handle more signals?
 		signal(SIGABRT, (__sighandler_t)call_ftrace_dump);
 		ftrace_enable();
 	}
