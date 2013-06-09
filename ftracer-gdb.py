@@ -57,8 +57,6 @@ class Ftracer (gdb.Command):
                     if tstamp:
                         o = (t.num, v["func"], v["arg1"], v["arg2"], v["arg3"], v["rsp"])
                         events[tstamp].append(o)
-                    else:
-                        break
         print ("%6s %6s %3s %-25s %s" %
                 ("TIME", "DELTA", "THR", "FUNC", "ARGS"))
         prev = 0
