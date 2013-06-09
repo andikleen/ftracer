@@ -11,7 +11,7 @@ LDFLAGS := -ldl -rdynamic -lpthread
 # Change for different trace buffer size per thread
 CONFIG := -DTSIZE=32768
 
-CLEAN := test.o bench.o ftracer.o test bench
+CLEAN := test.o bench.o ftracer.o test bench test.out
 EXE := test bench
 
 all: ftracer.o ${EXE}
@@ -23,5 +23,9 @@ ftracer.o: CFLAGS += ${CONFIG}
 test.o: CFLAGS+=${TRACE_CFLAGS}
 bench.o: CFLAGS+=${TRACE_CFLAGS}
 
+check: test
+	./test 2>&1 | ./strip-log > test.out
+	diff -b -u test.out test.out-expected
+	echo PASSED
 clean:
 	rm -f ${CLEAN} ${EXE}
