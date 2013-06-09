@@ -105,6 +105,10 @@ With many threads this may require a very wide terminal (plus a very small font)
 This can be useful to look for race conditions. This mode is only supported
 by gdb, not by the C dumper.
 
+To enable or disable tracing from gdb call ftrace_enable() or ftrace_disable()
+
+	(gdb) p ftrace_enable()
+
 Limits:
 
 The trace buffer size per thread is hard coded, but can be changed
@@ -116,5 +120,4 @@ There are some circumstances that confuse the nesting heuristic.
 With gcc 4.8 you may need to also disable shrink-wrapping.
 To trace dynamically linked functions in standard libraries -- like
 malloc -- you can use ltrace instead.
-
 
