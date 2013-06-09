@@ -1,0 +1,9 @@
+add thread register function and implement thread dumping in C dumper
+use delta compressed logging? (complicated)
+32bit support
+optional return tracing? (for duration and return code)
+make number of arguments configurable
+gdb implement "dump at time X" 
+gdb add option to only dump current thread
+implement triggers?
+implement filters?
