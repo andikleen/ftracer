@@ -1,6 +1,7 @@
 # dump ftracer from multiple threads interleaved from gdb
 import gdb
 import re
+import collections
 
 def getstr(v):
     v = "%s" % (v,)
@@ -9,12 +10,22 @@ def getstr(v):
         return t.group(1)
     return v
 
+def resolve_with_off(v):
+    x = gdb.execute("p/a %d" % (v,), False, True)
+    m = re.search(r'<(.*)>', x)
+    return m.group(1)
+
+def resolve(v):
+    v = resolve_with_off(v)
+    m = re.match(r'(.*)\+.*', v)
+    return m.group(1)
+
 class Ftracer (gdb.Command): 
     def __init__(self):
         super (Ftracer, self).__init__("ftracer", gdb.COMMAND_NONE, gdb.COMPLETE_SYMBOL)
 
     def invoke(self, arg, from_tty):
-        events = {}
+        events = collections.defaultdict(list)
         threads = {}
         for i in gdb.inferiors():
             for t in i.threads():
@@ -28,25 +39,20 @@ class Ftracer (gdb.Command):
                     tstamp = int(v["tstamp"])
                     if tstamp:
                         o = (t.num, v["src"], v["dst"], v["arg1"], v["arg2"], v["arg3"])
-                        #o = (t.num, v["src"], v["dst"])
-                        if tstamp in events:
-                            events[tstamp].append(o)
-                        else:
-                            events[tstamp] = (o)
+                        events[tstamp].append(o)
                     else:
                         break
-        print "collected"
+        print "%10s %3s  %-20s    %-10s %s" % ("DELTA", "THR", "CALLER", "CALLEE", "ARGS",)
         prev = 0
         delta = 0
         for t in sorted(events.keys()):
             if prev:
                 delta = t - prev
-            print t,": "
             for e in events[t]:
-                print e
                 print "%10d" % (delta,),
-                print " " * ((e[0] - 1) * 16),
-                #print "%s:%d:%s:%d" % (getstr(e[1]), int(e[2]), getstr(e[3]), e[4])
+                print "%3d " % (e[0],),
+                src = " " * ((e[0] - 1) * 16) + "%-10s" % (resolve_with_off(int(e[1])),)
+                print "%-20s -> %-10s %d %d %d" % (src, resolve(int(e[2])), int(e[3]), int(e[4]), int(e[5]))
             prev = t
 
 
