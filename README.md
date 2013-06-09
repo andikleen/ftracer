@@ -38,7 +38,7 @@ Quick howto:
 Performance overhead
 
 On a Westmere system the instrumentation increases the cost of an empty call by
-about 4 times. This is with a micro benchmark that does these calls in a tight
+about 6 times. This is with a micro benchmark that does these calls in a tight
 loop. On codes doing less function calls the overhead will likely be lower,
 as an Out-of-order CPU can better schedule around it.
 Exact slowdowns will depend on the CPU and the surrounding code and how many
