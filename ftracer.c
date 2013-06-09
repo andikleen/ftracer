@@ -203,58 +203,58 @@ void ftrace_dump_at_exit(unsigned max)
 
 static void __attribute__((constructor)) init_ftracer(void)
 {
-     if (getenv("FTRACER_ON")) {
-         ftrace_dump_at_exit(0);
-	 // xxx chain previous handler
-	 signal(SIGABRT, (__sighandler_t)call_ftrace_dump);
-	 ftrace_enable();
-     }
+	if (getenv("FTRACER_ON")) {
+		ftrace_dump_at_exit(0);
+		// xxx chain previous handler
+		signal(SIGABRT, (__sighandler_t)call_ftrace_dump);
+		ftrace_enable();
+	}
 
-     FILE *f = fopen("/proc/cpuinfo", "r");
-     if (!f)
-	  goto fallback;
+	FILE *f = fopen("/proc/cpuinfo", "r");
+	if (!f)
+		goto fallback;
 
-     char *line = NULL;
-     size_t linelen = 0;
-     ftracer_frequency = 0;
-     while (getline(&line, &linelen, f) > 0) {
-	  char unit[10];
+	char *line = NULL;
+	size_t linelen = 0;
+	ftracer_frequency = 0;
+	while (getline(&line, &linelen, f) > 0) {
+		char unit[10];
 
-	  if (strncmp(line, "model name", sizeof("model name")-1))
-	       continue;
-	  if (sscanf(line + strcspn(line, "@") + 1, "%lf%10s", 
-		     &ftracer_frequency, unit) == 2) {
-	       if (!strcasecmp(unit, "GHz"))
-		     ;
-	       else if (!strcasecmp(unit, "Mhz"))
-		     ftracer_frequency *= 1000.0;
-	       else {
-		    printf("Cannot parse unit %s\n", unit);
-		    goto fallback;
-	       }
-	       break;
-	  }
-     }     
-     free(line);
-     fclose(f);
-     if (ftracer_frequency) {
-	  ftracer_frequency *= 1000;
-	  return;
-     }
+		if (strncmp(line, "model name", sizeof("model name")-1))
+			continue;
+		if (sscanf(line + strcspn(line, "@") + 1, "%lf%10s", 
+			   &ftracer_frequency, unit) == 2) {
+			if (!strcasecmp(unit, "GHz"))
+				;
+			else if (!strcasecmp(unit, "Mhz"))
+				ftracer_frequency *= 1000.0;
+			else {
+				printf("Cannot parse unit %s\n", unit);
+				goto fallback;
+			}
+			break;
+		}
+	}     
+	free(line);
+	fclose(f);
+	if (ftracer_frequency) {
+		ftracer_frequency *= 1000;
+		return;
+	}
     
 fallback:
-     f = fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r");
-     int found = 0;
-     if (f) {
-         found = fscanf(f, "%lf", &ftracer_frequency);
-	 fclose(f);
-     }
-     if (found == 1) {
-         ftracer_frequency /= 1000.0;
-         return;
-     }
-     printf("Cannot find ftracer_frequency\n");
-     ftracer_frequency = 1;
+	f = fopen("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r");
+	int found = 0;
+	if (f) {
+		found = fscanf(f, "%lf", &ftracer_frequency);
+		fclose(f);
+	}
+	if (found == 1) {
+		ftracer_frequency /= 1000.0;
+		return;
+	}
+	printf("Cannot find ftracer_frequency\n");
+	ftracer_frequency = 1;
 }
 
 #if 0 /* Gives ugly warnings */
