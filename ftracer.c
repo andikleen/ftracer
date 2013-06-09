@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <string.h>
+#include <signal.h>
 
 #include "ftracer.h"
 
@@ -201,6 +202,8 @@ static void __attribute__((constructor)) init_ftracer(void)
 {
      if (getenv("FTRACER_ON")) {
          ftrace_dump_at_exit(0);
+	 // xxx chain previous handler
+	 signal(SIGABRT, (__sighandler_t)call_ftrace_dump);
 	 ftrace_enable();
      }
 
