@@ -11,29 +11,30 @@ not create a global bottleneck.
 
 Note that the time stamps include the overhead from the tracing.
 
-Requires gcc 4.7+ and a x86_64 system and the ability to rebuild the program.
+Requires gcc 4.7+ and a x86_64 Linux system and the ability to rebuild the program.
 
 Quick howto:
      cd ftrace
      make
      ./test
-     TIME      TOFF CALLER                       CALLEE               ARGUMENTS
-     0.00      0.00 main + 41                 -> f1                   1 2 3
-     0.07      0.07   f1 + 25                 -> f2                   4016d4 b c
-     0.11      0.04     f2 + 25               -> f3                   1 2 3
-     0.15      0.04   f1 + 25                 -> f3                   4 5 6
-     0.20      0.05   f1 + 45                 -> f2                   4016d7 15 16
-     0.22      0.02     f2 + 25               -> f3                   1 2 3
-     0.25      0.03   f1 + 45                 -> f3                   4 5 6
-     0.29      0.04 main + 41                 -> f3                   7 8 9
-     0.33      0.04 main + 61                 -> f1                   3 4 5
-     0.37      0.04   f1 + 25                 -> f2                   4016d4 b c
-     0.40      0.03     f2 + 25               -> f3                   1 2 3
-     0.43      0.03   f1 + 25                 -> f3                   4 5 6
-     0.47      0.04   f1 + 45                 -> f2                   4016d7 15 16
-     0.51      0.04     f2 + 25               -> f3                   1 2 3
-     0.55      0.04   f1 + 45                 -> f3                   4 5 6
-     0.59      0.04 main + 61                 -> f3                   7 8 9
+     TIME      TOFF FUNC                      ARGS
+     0.00      0.00 f1                        1 2 3
+     0.06      0.06   f2                      a b c
+     0.10      0.04     f3                    1 2 3
+     0.14      0.04   f3                      4 5 6
+     0.18      0.03   f2                      14 15 16
+     0.20      0.03     f3                    1 2 3
+     0.23      0.03   f3                      4 5 6
+     0.27      0.04 f3                        7 8 9
+     0.30      0.03 f1                        3 4 5
+     0.33      0.03   f2                      a b c
+     0.35      0.03     f3                    1 2 3
+     0.39      0.04   f3                      4 5 6
+     0.42      0.03   f2                      14 15 16
+     0.45      0.03     f3                    1 2 3
+     0.49      0.04   f3                      4 5 6
+     0.53      0.04 f3                        7 8 9
+
 
 Performance overhead
 
@@ -49,7 +50,8 @@ To use in your own project.
 The program needs to be build with -pg -mfentry and linked with -rdynamic -ldl ftrace.o
 
 	cd my-project
-	make CFLAGS='-g -pg -mfentry' LDFLAGS='-rdynamic -ldl ../ftrace/ftrace.o'	(or CXXFLAGS if using C++)
+	make CFLAGS='-g -pg -mfentry' LDFLAGS='-rdynamic -ldl ../ftrace/ftrace.o'
+	(or CXXFLAGS if using C++)
 	make sure to rebuild everything
 
 	FTRACER=1 ./my_program
@@ -92,26 +94,27 @@ the per thread buffers
 	[Switching to thread 1 (Thread 0x7ffff7615700 (LWP 23177))]
 	#0  main () at test.c:28
 	28              f1(3, 4, 5);
-	  TIME  DELTA  THR  CALLER                  CALLEE     ARGS
-	  0.00   0.00    1  main+41              -> f1         1 2 3
-	  0.04   0.04    1  f1+25                -> f2         10 11 12
-	  0.09   0.05    1  f2+25                -> f3         1 2 3
-	  0.13   0.04    1  f1+25                -> f3         4 5 6
-	  0.17   0.04    1  f1+45                -> f2         20 21 22
-	  0.21   0.03    1  f2+25                -> f3         1 2 3
-	  0.25   0.04    1  f1+45                -> f3         4 5 6
-	  0.30   0.05    1  main+41              -> f3         7 8 9
+        TIME    DELTA THR FUNC                      ARGS
+        0.00     0.00   1 f1                        1 2 3
+        0.03     0.03   1   f2                      a b c
+        0.05     0.02   1     f3                    1 2 3
+        ...
 
-When multiple threads are active they are displayed side by side. With many threads
-thi may require a very wide terminal (plus a very small font)
+When multiple threads are active they are displayed interleaved side by side.
+With many threads this may require a very wide terminal (plus a very small font)
+This can be useful to look for race conditions. This mode is only supported
+by gdb, not by the C dumper.
 
 Limits:
 
 The trace buffer size per thread is hard coded, but can be changed
-in the Makefile and rebuilding ftracer.o. Each entry currently takes 56 bytes.
-static symbols cannot be resolved to names right now from the program (compile with -Dstatic= if needed or use gdb)
+in the Makefile and rebuilding ftracer.o.
+static symbols cannot be resolved to names right now from the program
+(compile with -Dstatic= if needed or use the gdb ftracer command)
 The tracer cannot see uninstrumented and inlined functions.
 There are some circumstances that confuse the nesting heuristic.
-To trace dynamically linked functions in standard libraries you can use ltrace instead.
+With gcc 4.8 you may need to also disable shrink-wrapping.
+To trace dynamically linked functions in standard libraries -- like
+malloc -- you can use ltrace instead.
 
 
