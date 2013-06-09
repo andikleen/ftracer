@@ -1,5 +1,5 @@
 CFLAGS := -g -Wall -O2 
-LDFLAGS := -ldl -rdynamic
+LDFLAGS := -ldl -rdynamic -lpthread
 
 test: ftracer.o 
 
