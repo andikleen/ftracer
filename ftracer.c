@@ -87,12 +87,28 @@ bool ftrace_disable(void)
 	return old;
 }
 
+static const char *resolve_off(char *buf, int buflen, uint64_t addr, uint64_t *base)
+{
+	Dl_info info;
+	if (dladdr((void *)addr, &info)) {
+		snprintf(buf, buflen, "%s + %lu", info.dli_sname,
+				addr - (uint64_t)info.dli_saddr);
+		*base = (uint64_t)info.dli_saddr;
+	} else {
+		snprintf(buf, buflen, "%lx" ,addr);
+		*base = 0;
+	}
+	return buf;
+}
+
+
 static const char *resolve(char *buf, int buflen, uint64_t addr)
 {
 	Dl_info info;
 	if (dladdr((void *)addr, &info))
 		return info.dli_sname;
-	snprintf(buf, buflen, "%lx" ,addr);
+	else
+		snprintf(buf, buflen, "%lx" ,addr);
 	return buf;
 }
 
@@ -114,14 +130,13 @@ static unsigned dump_start(unsigned max, unsigned cur)
 
 void ftrace_dump(unsigned max)
 {
-	struct trace *t;
 	int cur = tcur;
 	int i;
 	uint64_t ts = 0, last = 0;
 	bool oldstate = ftrace_disable();
 
 	for (i = dump_start(max, cur); i != cur; i = (i + 1) % TSIZE) {
-		t = &tbuf[i];
+		struct trace *t = &tbuf[i];
 		if (t->tstamp == 0)
 			break;
 		if (!ts)
@@ -129,10 +144,12 @@ void ftrace_dump(unsigned max)
 		if (!last)
 			last = t->tstamp;
 		char src[128], dst[128];
+		uint64_t callbase;
+		const char *srcname = resolve_off(src, sizeof src, t->src, &callbase);
 		printf("%6.1f %6.1f %-20s -> %-20s %lx %lx %lx\n",
 		       (t->tstamp - ts) / frequency,
 		       (t->tstamp - last) / frequency,
-		       resolve(src, sizeof src, t->src),
+		       srcname,
 		       resolve(dst, sizeof dst, t->dst),
 		       t->arg1, t->arg2, t->arg3);
 		last = t->tstamp;
