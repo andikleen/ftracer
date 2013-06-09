@@ -135,7 +135,7 @@ void ftrace_dump(unsigned max)
 {
 	int cur = tcur;
 	int i;
-	uint64_t ts = 0, last = 0;
+	uint64_t ts = 0, last;
 	int stackp = 0;
 	uint64_t stack[MAXSTACK];
 	bool oldstate = ftrace_disable();
@@ -148,9 +148,8 @@ void ftrace_dump(unsigned max)
 		if (!ts) {
 			ts = t->tstamp;
 			stack[stackp] = t->rsp;
-		}
-		if (!last)
 			last = t->tstamp;
+		}
 		char src[128], dst[128];
 		const char *srcname = resolve_off(src, sizeof src, t->src);
 
