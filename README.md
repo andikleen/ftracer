@@ -52,9 +52,10 @@ The program needs to be build with -pg -mfentry and linked with -rdynamic -ldl f
 	make CFLAGS='-g -pg -mfentry' LDFLAGS='-rdynamic -ldl ../ftrace/ftrace.o'	(or CXXFLAGS if using C++)
 	make sure to rebuild everything
 
-	FTRACER_ON=1 ./my_program
+	FTRACER=1 ./my_program
 
-FTRACE_ON=1 enables automatic dumping at exit or SIGABRT (e.g. assert failure)
+FTRACER=1 enables automatic dumping at exit or SIGABRT (e.g. assert failure)
+If a number other than 0 and 1 is specified it specifies the number of entries to dump.
 
 Control ftracer from the program:
 

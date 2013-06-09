@@ -203,14 +203,24 @@ void ftrace_dump_at_exit(unsigned max)
 	atexit(call_ftrace_dump);
 }
 
-static void __attribute__((constructor)) init_ftracer(void)
+static void ftracer_envconf(void)
 {
-	if (getenv("FTRACER_ON")) {
-		ftrace_dump_at_exit(0);
+	char *v = getenv("FTRACER");
+	printf("foo\n");
+	if (v && sscanf(v, "%d", &dump_at_exit) == 1) {
+		printf("enabled %d\n",dump_at_exit);
+		if (dump_at_exit == 1)
+			dump_at_exit = 0;
+		ftrace_dump_at_exit(dump_at_exit);
 		// xxx chain previous handler
 		signal(SIGABRT, (__sighandler_t)call_ftrace_dump);
 		ftrace_enable();
 	}
+}
+
+static void __attribute__((constructor)) init_ftracer(void)
+{
+	ftracer_envconf();
 
 	FILE *f = fopen("/proc/cpuinfo", "r");
 	if (!f)
