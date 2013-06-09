@@ -34,6 +34,9 @@ class Thr:
     def level(self):
         return len(self.stack) - 1
 
+THR_WIDTH = 25
+TSTAMP_WIDTH = 8
+
 class Ftracer (gdb.Command): 
     def __init__(self):
         super (Ftracer, self).__init__("ftracer", gdb.COMMAND_NONE, gdb.COMPLETE_SYMBOL)
@@ -44,8 +47,8 @@ class Ftracer (gdb.Command):
         if len(args) >= 1:
             max = int(args[0])
         events = collections.defaultdict(list)
-        threads = {}
         frequency = float(gdb.selected_frame().read_var("ftracer_frequency"))
+        thr_max = 0
         for i in gdb.inferiors():
             for t in i.threads():
                 gdb.execute("thread %d" % (t.num,))
@@ -57,8 +60,12 @@ class Ftracer (gdb.Command):
                     if tstamp:
                         o = (t.num, v["func"], v["arg1"], v["arg2"], v["arg3"], v["rsp"])
                         events[tstamp].append(o)
-        print ("%6s %6s %3s %-25s %s" %
-                ("TIME", "DELTA", "THR", "FUNC", "ARGS"))
+                        if int(t.num) > thr_max:
+                            thr_max = int(t.num)
+        print ("%*s %*s %3s %-*s %s" %
+                (TSTAMP_WIDTH, "TIME",
+                 TSTAMP_WIDTH, "DELTA", "THR",
+                 THR_WIDTH * thr_max, "FUNC", "ARGS"))
         prev = 0
         delta = 0
         start = 0
@@ -72,15 +79,22 @@ class Ftracer (gdb.Command):
             if start == 0:
                 start = t
             for e in events[t]:
-                thr = threads[e[0]]
+                tnum = e[0]
+                thr = threads[tnum]
                 thr.update(int(e[5]))
-                func = " " * (thr.level() * 2) + resolve(int(e[1]))
-                print "%6.2f %6.2f %3d %-25s %x %x %x" % (
-                        (t - start) / frequency,
-                        delta / frequency,
-                        e[0],
-                        func,
-                        int(e[2]), int(e[3]), int(e[4]))
+                func = ""
+                func += " " * (THR_WIDTH * (tnum-1)) 
+                func += " " * (thr.level() * 2) 
+                func += resolve(int(e[1]))
+                print "%*.2f %*.2f %3d %-*s %x %x %x" % (
+                       TSTAMP_WIDTH,
+                       (t - start) / frequency,
+                       TSTAMP_WIDTH,
+                       delta / frequency,
+                       tnum, 
+                       THR_WIDTH * thr_max,
+                       func,
+                       int(e[2]), int(e[3]), int(e[4]))
             prev = t
 
 

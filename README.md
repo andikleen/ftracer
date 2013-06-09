@@ -82,7 +82,7 @@ This has the advantage that gdb can display the trace buffers from all threads.
 Note that the program needs to be linked with -lpthread to allow gdb to access
 the per thread buffers
 
-	FTRACE_ON=1 gdb program
+	FTRACER=1 gdb program
         ...
 	(gdb) source ftracer-gdb.py	
 	...
@@ -102,7 +102,8 @@ the per thread buffers
 	  0.25   0.04    1  f1+45                -> f3         4 5 6
 	  0.30   0.05    1  main+41              -> f3         7 8 9
 
-The output from all the thread buffers is interleaved.
+When multiple threads are active they are displayed side by side. With many threads
+thi may require a very wide terminal (plus a very small font)
 
 Limits:
 
