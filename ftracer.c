@@ -258,8 +258,10 @@ fallback:
      frequency = 1;
 }
 
+#if 0 /* Gives ugly warnings */
 asm(" .pushsection \".debug_gdb_scripts\",\"MS\",@progbits,1\n"
     " .byte 1\n"
     " .asciz \"ftracer-gdb.py\"\n"
     " .popsection");
+#endif
 
