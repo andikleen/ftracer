@@ -25,6 +25,10 @@ class Ftracer (gdb.Command):
         super (Ftracer, self).__init__("ftracer", gdb.COMMAND_NONE, gdb.COMPLETE_SYMBOL)
 
     def invoke(self, arg, from_tty):
+        args = arg.split()
+        max = 0
+        if len(args) >= 1:
+            max = int(args[0])
         events = collections.defaultdict(list)
         threads = {}
         frequency = float(gdb.selected_frame().read_var("ftracer_frequency"))
@@ -46,7 +50,10 @@ class Ftracer (gdb.Command):
         prev = 0
         delta = 0
         start = 0
-        for t in sorted(events.keys()):
+        k = sorted(events.keys())
+        if max:
+            k = collections.deque(k, max)
+        for t in k:
             if prev:
                 delta = t - prev
             if start == 0:
