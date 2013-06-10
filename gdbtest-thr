@@ -1,4 +1,6 @@
 source ftracer-gdb.py
+set height 10000000
+set confirm no
 start
 break sleep thread 1
 run

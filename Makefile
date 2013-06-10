@@ -28,16 +28,21 @@ test.o: CFLAGS+=${TRACE_CFLAGS}
 bench.o: CFLAGS+=${TRACE_CFLAGS}
 test-thr.o: CFLAGS+=${TRACE_CFLAGS}
 
-check: test
+check: test test-thr
 	./test 2>&1 | ./strip-log > test.out
 	diff -b -u test.out test.out-expected
 
-	gdb -x gdbtest --eval detach --eval quit ./test 2>&1 | \
+	# single threaded gdb
+	gdb -x gdbtest --eval quit ./test 2>&1 | \
 		sed -n '1,/^Detaching/p' | \
 		sed -n '/TIME/,$$p' | \
 		grep -v Detaching | \
 		./strip-log > test2.out
 	diff -b -u test2.out test.out-expected
-	echo PASSED
+
+	# threaded gdb check
+	# output not checked for now
+	gdb -x gdbtest-thr --eval quit ./test-thr
+
 clean:
 	rm -f ${CLEAN} ${EXE}

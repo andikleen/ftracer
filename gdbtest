@@ -1,4 +1,5 @@
 source ftracer-gdb.py
+set confirm no
 break test.c:29
 run
 ftracer
