@@ -1,5 +1,18 @@
 # dump ftracer from multiple threads interleaved from gdb
 # load in gdb with "source ftracer-gdb.py" and run as "ftracer"
+#
+# Copyright (c) 2013 Andi Kleen
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that: (1) source code distributions
+# retain the above copyright notice and this paragraph in its entirety, (2)
+# distributions including binary code include the above copyright notice and
+# this paragraph in its entirety in the documentation or other materials
+# provided with the distribution
+#
+# THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 import gdb
 import re
 import collections
@@ -99,6 +112,5 @@ class Ftracer (gdb.Command):
                        func,
                        int(e[2]), int(e[3]), int(e[4]))
             prev = t
-
 
 Ftracer()
