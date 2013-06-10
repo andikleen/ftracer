@@ -129,6 +129,10 @@ To enable or disable tracing from gdb call ftrace_enable() or ftrace_disable()
 
 	(gdb) p ftrace_disable()
 
+## Testing
+
+make check runs a simple test suite.
+
 ## Limits
 
 The trace buffer size per thread is hard coded, but can be changed
