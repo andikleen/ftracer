@@ -1,22 +1,30 @@
-ftracer
+# ftracer
+
+## Overview
 
 ftracer is a simple user space implementation of a linux kernel style function tracer.
 It allows to trace every call in a instrumented user applications. It is useful
 for debugging and performance analysis due to its fine grained time stamp.
 
-It relies on gcc generating a call on top of every function call.
+This allows to do control flow oriented debugging without any special
+instrumentation. So if the program does something unexpected it's easily
+possible to look at the function calls before that, and use that to
+deduce the cause of the problem.
 
-The tracing slows every function call down. The tracing is per thread and does
-not create a global bottleneck.
+ftracer relies on gcc generating a call on top of every function call.
+The tracing slows every function call down (about 4x).
+The tracing is per thread and does not create a global bottleneck.
 
-Note that the time stamps include the overhead from the tracing.
+It supports a dump function in C, directly callable by the program
+or on exit, and a gdb function to dump from gdb.
 
 Requires gcc 4.7+ and a x86_64 Linux system and the ability to rebuild the program.
 
-Quick howto:
-     cd ftrace
+## Quick howto
+
+     cd ftracer
      make
-     ./test
+     FTRACER=1 ./test
      TIME      TOFF FUNC                      ARGS
      0.00      0.00 f1                        1 2 3
      0.06      0.06   f2                      a b c
@@ -35,8 +43,15 @@ Quick howto:
      0.49      0.04   f3                      4 5 6
      0.53      0.04 f3                        7 8 9
 
+The time stamps include the overhead from the tracing and are in us.
 
-Performance overhead
+The argument printing is approximate. The tracer doesn't know
+the true number of arguments, so if the function has less than three
+integer arguments it may print junk for the arguments not passed.
+It also cannot dump floating point arguments. The argument printing
+is in hex.
+
+## Performance overhead
 
 On a Westmere system the instrumentation increases the cost of an empty call by
 about 6 times. This is with a micro benchmark that does these calls in a tight
@@ -45,7 +60,7 @@ as an Out-of-order CPU can better schedule around it.
 Exact slowdowns will depend on the CPU and the surrounding code and how many
 function calls it does.
 
-To use in your own project. 
+## To use in your own project
 
 The program needs to be build with -pg -mfentry and linked with -rdynamic -ldl ftrace.o
 
@@ -69,8 +84,7 @@ Control ftracer from the program:
 
 	ftrace_dump(stdout, 100);	/* Dump last 100 entries of current thread to stdout */
 
-Call ftrace_dump_on_exit(max) to automatically dump on exit. ftrace_dump() can be also 
-called from gdb during debugging.
+Call ftrace_dump_on_exit(max) to automatically dump on exit
 
 A common use case is to keep the tracer running, but dump when
 something odd happens (like an assertation failure)
@@ -79,8 +93,12 @@ The thread buffer is per process and is thread safe. However
 ftrace_dump will only dump the current process and the automatic exit
 on dumping will only dump the thread that called exit.
 
+## Using ftracer from gdb
+
 The trace buffer can be also controlled from gdb using a special python module.
-This has the advantage that gdb can display the trace buffers from all threads.
+This has the advantage that gdb can display the trace buffers from all threads,
+and it supports decoding the addresses of static functions.
+
 Note that the program needs to be linked with -lpthread to allow gdb to access
 the per thread buffers
 
@@ -109,7 +127,9 @@ To enable or disable tracing from gdb call ftrace_enable() or ftrace_disable()
 
 	(gdb) p ftrace_enable()
 
-Limits:
+	(gdb) p ftrace_disable()
+
+## Limits
 
 The trace buffer size per thread is hard coded, but can be changed
 in the Makefile and rebuilding ftracer.o.
@@ -121,3 +141,4 @@ With gcc 4.8 you may need to also disable shrink-wrapping.
 To trace dynamically linked functions in standard libraries -- like
 malloc -- you can use ltrace instead.
 
+Andi Kleen
