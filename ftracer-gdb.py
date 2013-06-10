@@ -1,7 +1,13 @@
 # dump ftracer from multiple threads interleaved from gdb
+# load in gdb with "source ftracer-gdb.py" and run as "ftracer"
 import gdb
 import re
 import collections
+
+# field lengths. can be tweaked, especially if you have very long
+# identifiers or long delays
+THR_WIDTH = 25
+TSTAMP_WIDTH = 8
 
 def getstr(v):
     v = "%s" % (v,)
@@ -33,9 +39,6 @@ class Thr:
 
     def level(self):
         return len(self.stack) - 1
-
-THR_WIDTH = 25
-TSTAMP_WIDTH = 8
 
 class Ftracer (gdb.Command): 
     def __init__(self):
