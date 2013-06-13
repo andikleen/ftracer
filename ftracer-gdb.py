@@ -1,7 +1,8 @@
 # dump ftracer from multiple threads interleaved from gdb
 # load in gdb with "source ftracer-gdb.py" and run as "ftracer"
 #
-# Copyright (c) 2013 Andi Kleen
+# Copyright (c) 2013 Intel Corporation
+# Author: Andi Kleen
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that: (1) source code distributions
