@@ -13,7 +13,7 @@ LDFLAGS := -ldl -rdynamic -lpthread
 CONFIG := -DTSIZE=128*1024
 
 CLEAN := test.o bench.o ftracer.o test bench test.out test2.out \
-	 test-thr.o
+	 test-thr.o bench-rdpmc.o bench-rdpmc
 EXE := test bench test-thr
 
 all: ftracer.o ${EXE}
@@ -27,6 +27,16 @@ ftracer.o: CFLAGS += ${CONFIG}
 test.o: CFLAGS+=${TRACE_CFLAGS}
 bench.o: CFLAGS+=${TRACE_CFLAGS}
 test-thr.o: CFLAGS+=${TRACE_CFLAGS}
+
+# needs git://github.com/andikleen/pmu-tools
+PMUTOOLS := ~/pmu/pmu-tools
+
+bench-rdpmc.o: bench.c
+	${CC} ${CFLAGS} -o bench-rdpmc.o -c $<
+
+bench-rdpmc.o: CFLAGS += ${TRACE_CFLAGS} -DRDPMC -I ${PMUTOOLS}/self
+
+bench-rdpmc: ftracer.o ${PMUTOOLS}/self/rdpmc.o
 
 check: test test-thr
 	./test 2>&1 | ./strip-log > test.out
