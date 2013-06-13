@@ -12,7 +12,7 @@ possible to look at the function calls before that, and use that to
 deduce the cause of the problem.
 
 ftracer relies on gcc generating a call on top of every function call.
-The tracing slows every function call down (about 4x).
+The tracing slows every function call down (about 3x).
 The tracing is per thread and does not create a global bottleneck.
 
 It supports a dump function in C, directly callable by the program
@@ -54,9 +54,10 @@ is in hex.
 ## Performance overhead
 
 On a Westmere system the instrumentation increases the cost of an empty call by
-about 6 times. This is with a micro benchmark that does these calls in a tight
+about 3 times. This is with a micro benchmark that does these calls in a tight
 loop. On codes doing less function calls the overhead will likely be lower,
 as an Out-of-order CPU can better schedule around it.
+
 Exact slowdowns will depend on the CPU and the surrounding code and how many
 function calls it does.
 
