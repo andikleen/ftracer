@@ -9,6 +9,8 @@ import re
 
 # must match printf field size used in ftracer.c
 FIELDSIZE = 25
+FUNC_START = 20
+FUNC_END   = 21+FIELDSIZE
 
 if len(sys.argv) < 2:
     print "usage: fresolve elf-executable < ftracer_log"
@@ -30,18 +32,21 @@ for l in pipe:
 		symtab.insert(pos, m.group(2))
 
 for l in sys.stdin:
-	f = l.split()
-	if len(f) < 3 or not re.match("[0-9a-f]+", f[2]):
+        f = l[FUNC_START:FUNC_END]
+        m = re.match(r"( *)(0x[0-9a-f]+)", f)
+        if not m:
                 print l,
 	else:
-                adr = int(f[2], 16)
+                adr = int(m.group(2), 16)
                 if adr > max + 1000:
-                        print
+                        print l,
                         continue
 		n = bisect.bisect_left(adresses, adr) - 1
 		if n >= len(adresses):
-			print
+			print l,
 			continue
 		sym = symtab[n]
-                print re.sub(f[2] + " *", "%-*s" % (FIELDSIZE, symtab[n]), l),
-
+                print (l[:FUNC_START] +
+                        m.group(1) + 
+                        "%.*s" % (FIELDSIZE - len(m.group(1)), symtab[n]) +
+                        l[FUNC_END:]),
