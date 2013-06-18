@@ -1,0 +1,5 @@
+#!/bin/sh
+# frun executable arguments
+# run executable with ftracer (must be already linked in) and resolve
+# static addresses from main binary`
+FTRACER=1 "$@" 2>&1 | `dirname $0`/fresolve $1

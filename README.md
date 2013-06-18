@@ -145,6 +145,10 @@ it will only work for the main binary, not shared libraries.
 
 	FTRACER=1 ./test 2>&1 | ./fresolve ./test
 
+or easier with the frun wrapper
+
+	frun ./test
+
 Alternatively compile with -Dstatic= if needed or use the gdb ftracer command.
 The tracer cannot see uninstrumented and inlined functions.
 There are some circumstances that confuse the nesting heuristic.
