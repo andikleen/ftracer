@@ -138,8 +138,14 @@ make check runs a simple test suite.
 
 The trace buffer size per thread is hard coded, but can be changed
 in the Makefile and rebuilding ftracer.o.
-static symbols cannot be resolved to names right now from the program
-(compile with -Dstatic= if needed or use the gdb ftracer command)
+
+static symbols cannot be resolved to names right now from the program.
+One option is to run the output through fresolve afterwards, but
+it will only work for the main binary, not shared libraries.
+
+	FTRACER=1 ./test 2>&1 | ./fresolve ./test
+
+Alternatively compile with -Dstatic= if needed or use the gdb ftracer command.
 The tracer cannot see uninstrumented and inlined functions.
 There are some circumstances that confuse the nesting heuristic.
 With gcc 4.8 you may need to also disable shrink-wrapping.
