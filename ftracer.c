@@ -163,6 +163,8 @@ void ftrace_dump(FILE *out, unsigned max)
 		} else {
 			while (stackp > 0 && t->rsp > stack[stackp])
 				stackp--;
+			if (stackp == 0 && t->rsp > stack[0])
+				stack[0] = t->rsp;
 		}
 
 		char buf[128];
