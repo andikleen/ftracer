@@ -113,7 +113,7 @@ static const char *resolve(char *buf, int buflen, uint64_t addr)
 	if (dladdr((void *)addr, &info) && info.dli_sname)
 		return info.dli_sname;
 	else
-		snprintf(buf, buflen, "%lx" ,addr);
+		snprintf(buf, buflen, "0x%lx" ,addr);
 	return buf;
 }
 
