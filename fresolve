@@ -32,7 +32,7 @@ for l in pipe:
 for l in sys.stdin:
 	f = l.split()
 	if len(f) < 3 or not re.match("[0-9a-f]+", f[2]):
-                print
+                print l,
 	else:
                 adr = int(f[2], 16)
                 if adr > max + 1000:
