@@ -99,8 +99,12 @@ class Ftracer (gdb.Command):
                 tnum = e[0]
                 thr = threads[tnum]
                 thr.update(int(e[5]))
-                func = ""
-                func += " " * (THR_WIDTH * (tnum-1)) 
+		if thr_max >= 8:
+			func = "<%d> " % (tnum)
+			width = 30
+		else:
+                	func = " " * (THR_WIDTH * (tnum-1)) 
+                       	width = THR_WIDTH * thr_max,
                 func += " " * (thr.level() * 2) 
                 func += resolve(int(e[1]))
                 print "%*.2f %*.2f %3d %-*s %x %x %x" % (
@@ -108,8 +112,8 @@ class Ftracer (gdb.Command):
                        (t - start) / frequency,
                        TSTAMP_WIDTH,
                        delta / frequency,
-                       tnum, 
-                       THR_WIDTH * thr_max,
+                       tnum,
+		       width,
                        func,
                        int(e[2]), int(e[3]), int(e[4]))
             prev = t
