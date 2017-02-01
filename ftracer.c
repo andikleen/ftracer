@@ -214,7 +214,7 @@ static void ftracer_envconf(void)
 		ftrace_dump_at_exit(dump_at_exit);
 		// xxx chain previous handler
 		// handle more signals?
-		signal(SIGABRT, (__sighandler_t)call_ftrace_dump);
+		signal(SIGABRT, (void (*)(int))call_ftrace_dump);
 		ftrace_enable();
 	}
 }
